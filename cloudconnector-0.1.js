@@ -241,6 +241,14 @@ function onOpen() {
                      {name: "Query More", functionName: "sendQueryMore"}
                     ];
   ss.addMenu("Cloud Connector", menuEntries);
+  login();
+  sendSoqlQueriesDirect();
+
+}
+
+function regularQuery() {
+  login();
+  sendSoqlQueriesDirect();
 }
 
 /** Retrieve config params from the UI and store them. */
@@ -346,10 +354,9 @@ function login() {
       Browser.msgBox(e);
     }
 }
+function renderGridDataToSheet(sheet, object, renderHeaders) {
+  sheet.clear();
 
-function renderGridData(object, renderHeaders){
-  var sheet = SpreadsheetApp.getActiveSheet();
- 
   var data = [];
   var sObjectAttributes = {};
   
@@ -377,6 +384,12 @@ function renderGridData(object, renderHeaders){
   Logger.log(sheet.getLastRow());
   var destinationRange = sheet.getRange(sheet.getLastRow()+1, 1, data.length, headers.length);
   destinationRange.setValues(data);
+
+}
+
+function renderGridData(object, renderHeaders){
+  var sheet = SpreadsheetApp.getActiveSheet();
+  renderGridDataToSheet(sheet, object, renderHeaders);
 }
 
 
@@ -398,6 +411,33 @@ function sendSoqlQuery(e){
   
   renderGridData(processResults(results), true);
   
+  var app = UiApp.getActiveApplication();
+  app.close();
+  return app;
+}
+
+function sendSoqlQueriesDirect(){
+  var doc = SpreadsheetApp.getActiveSpreadsheet();
+
+  // get sales sheet
+  var sales_sheet = doc.getSheetByName("sales metrics");
+  var sales_query = sales_sheet.getSheetValues(1,2,1,1)[0][0];
+
+  var results = query(encodeURIComponent(sales_query));
+  var sales_result_sheet = doc.getSheetByName("sales");
+
+  renderGridDataToSheet(sales_result_sheet, processResults(results), true);
+ 
+  // get marketing sheet
+  var mktg_sheet = doc.getSheetByName("mktg metrics");
+  var mktg_query = mktg_sheet.getSheetValues(1,2,1,1)[0][0];
+
+  var results = query(encodeURIComponent(mktg_query));
+  var mktg_result_sheet = doc.getSheetByName("mktg");
+
+  renderGridDataToSheet(mktg_result_sheet, processResults(results), true);
+ 
+
   var app = UiApp.getActiveApplication();
   app.close();
   return app;
